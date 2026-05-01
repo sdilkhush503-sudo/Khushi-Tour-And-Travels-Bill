@@ -648,22 +648,91 @@ function generateInvoice(){
 }
 
 async function downloadPDF(){
-  const el=document.getElementById("inv-content");
-  if(!document.getElementById("inv-preview").classList.contains("visible")){toast("\u26a0\ufe0f Generate bill first!");return;}
-  toast("\u23f3 Preparing PDF…");
+  if(!document.getElementById("inv-preview").classList.contains("visible")){
+    toast("\u26a0\ufe0f Pehle Bill Generate karo!"); return;
+  }
+  toast("\u23f3 High quality PDF ban raha hai...");
+
   try{
-    const c=await html2canvas(el,{scale:3,useCORS:true,backgroundColor:"#fff",logging:false,allowTaint:true});
-    const img=c.toDataURL("image/png",1.0);
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-    const ih=(c.height*pw)/c.width;
-    if(ih>ph){const sc=ph/ih;pdf.addImage(img,"PNG",(pw-pw*sc)/2,0,pw*sc,ph);}
-    else pdf.addImage(img,"PNG",0,0,pw,ih);
-    const n=document.getElementById("d-invno").textContent;
+    const original = document.getElementById("inv-content");
+
+    // ── 1. Clone the invoice into a hidden off-screen container ──
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = [
+      "position:fixed","left:-9999px","top:0",
+      "width:860px",          // exact fixed pixel width — no responsive scaling
+      "background:#fff",
+      "z-index:-9999",
+      "font-family:'Poppins',sans-serif",
+      "overflow:visible",
+    ].join(";");
+
+    const clone = original.cloneNode(true);
+
+    // ── 2. Strip ALL animations, transitions, transforms on clone ──
+    clone.style.cssText = "animation:none!important;transition:none!important;transform:none!important;width:860px;max-width:860px;border-radius:12px;overflow:hidden;box-shadow:none;";
+
+    // Strip animations from every descendant
+    clone.querySelectorAll("*").forEach(el => {
+      el.style.animation    = "none";
+      el.style.transition   = "none";
+      el.style.transform    = "none";
+      el.style.willChange   = "auto";
+    });
+
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // ── 3. Wait a tick so fonts/images settle ──
+    await new Promise(r => setTimeout(r, 300));
+
+    // ── 4. Capture at scale:4 (ultra-sharp, ~3440px wide) ──
+    const canvas = await html2canvas(clone, {
+      scale: 4,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      imageTimeout: 0,
+      removeContainer: false,
+      width: 860,
+      windowWidth: 860,
+    });
+
+    document.body.removeChild(wrapper);
+
+    // ── 5. Build PDF exactly fitting A4 ──
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4", compress:false });
+    const PW = pdf.internal.pageSize.getWidth();   // 210 mm
+    const PH = pdf.internal.pageSize.getHeight();  // 297 mm
+
+    // Convert canvas to PNG at full quality
+    const imgData = canvas.toDataURL("image/png", 1.0);
+
+    // Calculate rendered height in mm
+    const imgH_mm = (canvas.height / canvas.width) * PW;
+
+    if(imgH_mm <= PH){
+      // Fits on one page — center vertically
+      const topMargin = (PH - imgH_mm) / 2;
+      pdf.addImage(imgData, "PNG", 0, topMargin > 8 ? 8 : 0, PW, imgH_mm, "", "FAST");
+    } else {
+      // Tall invoice: scale to fit height
+      const scale  = PH / imgH_mm;
+      const scaledW = PW * scale;
+      const xOff   = (PW - scaledW) / 2;
+      pdf.addImage(imgData, "PNG", xOff, 0, scaledW, PH, "", "FAST");
+    }
+
+    const n = document.getElementById("d-invno").textContent || "invoice";
     pdf.save("KhushiTourTravel-"+n+".pdf");
-    toast("\u2705 PDF downloaded!");
-  }catch(e){toast("\u274c PDF failed");console.error(e);}
+    toast("\u2705 Crystal clear PDF download ho gaya!");
+
+  } catch(err){
+    console.error(err);
+    toast("\u274c Error aaya — dobara try karo");
+  }
 }
 
 function shareWhatsApp(){
