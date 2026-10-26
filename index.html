@@ -317,6 +317,13 @@ body{
 <div class="form-grid">
 <div class="field"><label>Customer Name</label><input type="text" id="custName" placeholder="Full name"></div>
 <div class="field"><label>Mobile Number</label><input type="text" id="custMobile" placeholder="10-digit number"></div>
+
+<div class="field">
+  <label>Vehicle Number</label>
+  <input type="text" id="vehicleNo"
+         placeholder="e.g. RJ14 AB 1234">
+</div>
+
 <div class="field"><label>From Location</label><input type="text" id="fromLoc" placeholder="Departure city"></div>
 <div class="field"><label>To Location</label><input type="text" id="toLoc" placeholder="Destination city"></div>
 <div class="field"><label>Total KM</label><input type="number" id="totalKm" placeholder="e.g. 280" oninput="recalc()"></div>
@@ -359,6 +366,11 @@ body{
 <div>
 <div class="cust-row"><span class="c-lbl">Customer Name</span><span class="c-sep">:</span><span class="c-val" id="d-name">&#8212;</span></div>
 <div class="cust-row"><span class="c-lbl">Mobile No.</span><span class="c-sep">:</span><span class="c-val" id="d-mobile">&#8212;</span></div>
+<div class="cust-row">
+  <span class="c-lbl">Vehicle No.</span>
+  <span class="c-sep">:</span>
+  <span class="c-val" id="d-vehicleNo">N/A</span>
+</div>
 </div>
 <svg width="108" height="50" viewBox="0 0 160 75" style="opacity:.06"><path d="M10 55 Q14 55 16 50 L30 20 Q36 10 46 10 L114 10 Q124 10 130 20 L144 50 Q146 55 150 55 L150 62 Q150 66 148 66 L12 66 Q10 66 10 62 Z" fill="#0B1F45"/><circle cx="34" cy="65" r="10" fill="#0B1F45"/><circle cx="34" cy="65" r="5" fill="#888"/><circle cx="126" cy="65" r="10" fill="#0B1F45"/><circle cx="126" cy="65" r="5" fill="#888"/><path d="M44 22 L58 12 L102 12 L116 22 Z" fill="#6b99cc" opacity=".4"/></svg>
 </div></div></div>
@@ -457,6 +469,7 @@ function generateInvoice(){
   const dt=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"2-digit",year:"numeric"});
   set("d-invno",invNo);set("d-date",dt);
   set("d-name",v("custName")||"N/A");set("d-mobile",v("custMobile")||"N/A");
+  set("d-vehicleNo",v("vehicleNo")||"N/A");
   set("d-from",v("fromLoc")||"N/A");set("d-to",v("toLoc")||"N/A");
   set("d-km",km+" KM");set("d-rate","\u20b9 "+rt.toFixed(2));
   set("d-triptype",v("tripType")||"One Way");
